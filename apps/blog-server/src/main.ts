@@ -20,7 +20,7 @@ createTaskprioKyselyConnection()
 await testPostgreConnection()
 
 app.use(cors({
-    origin: ["http://localhost:3000"],
+    origin: ["http://localhost:3000", "https://withcenter-assessment-webapp.onrender.com"],
     credentials: true
 }))
 app.use(cookieParser());
