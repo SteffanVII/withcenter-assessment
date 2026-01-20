@@ -19,6 +19,9 @@
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
   },
+  "files": [
+      "dist/**"
+  ],
   "dependencies": {
     "kysely": "^0.28.9"
   }
