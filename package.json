@@ -3,6 +3,8 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
+    "build::server": "turbo run build --filter=@repo/blog-types --filter=blog-server",
+    "build::webapp": "turbo run build --filter=@repo/blog-types --filter=blog-webapp",
     "dev": "turbo run dev --parallel --force",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
