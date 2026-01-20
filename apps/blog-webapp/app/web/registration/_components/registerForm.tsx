@@ -153,6 +153,7 @@ const RegisterForm = () => {
                 <Button
                     variant={"secondary"}
                     className={`w-full`}
+                    disabled={registerTriggerIsPending}
                     onClick={() => {
                         form.handleSubmit(handleRegister)()
                     }}

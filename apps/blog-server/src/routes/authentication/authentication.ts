@@ -158,32 +158,32 @@ authenticationRoutes.post("/login", async (req: ILoginRequest, res: Response) =>
 
         const verifiedPassword = await verifyPassword(password, user.password_hashed)
 
-        if ( verifiedPassword ) {
-
-            const accessToken = jwt.sign({
-                email : user.email,
-                id : user.id
-            }, jwtSecret)
-
-            res.status(200)
-            .cookie(
-                accessTokenCookieName,
-                accessToken,
-                {
-                    httpOnly: true,
-                    sameSite: "none",
-                    secure: true,
-                    maxAge: 1000 * 60 * 60 * 24 * 365 * 10
-                }
-            )           
-            .json({
-                id : user.id,
-                email : user.email,
-                firstname : user.firstname,
-                lastname : user.lastname
-            })
-
+        if ( !verifiedPassword ) {
+            res.status(403).json({ message : "Incorrect password" })
+            return
         }
+        const accessToken = jwt.sign({
+            email : user.email,
+            id : user.id
+        }, jwtSecret)
+
+        res.status(200)
+        .cookie(
+            accessTokenCookieName,
+            accessToken,
+            {
+                httpOnly: true,
+                sameSite: "none",
+                secure: true,
+                maxAge: 1000 * 60 * 60 * 24 * 365 * 10
+            }
+        )           
+        .json({
+            id : user.id,
+            email : user.email,
+            firstname : user.firstname,
+            lastname : user.lastname
+        })
 
 
     } catch (error) {
