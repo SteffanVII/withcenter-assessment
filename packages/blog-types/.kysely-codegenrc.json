@@ -1,0 +1,13 @@
+{
+    "camelCase" : false,
+    "outFile": "./src/db.ts",
+    "defaultSchema" : "public",
+    "dialect" : "postgres",
+    "url" : "env(DATABASE_URL)",
+    "excludePattern" : "{auth,extension,vault,realtime,storage,extensions}.*",
+    "pascalCase" : true,
+    "runtimeEnums" : true,
+    "typeMapping" : {
+        "timestamp" : "ColumnType<string, string | string, Date | string>"
+    }
+}
