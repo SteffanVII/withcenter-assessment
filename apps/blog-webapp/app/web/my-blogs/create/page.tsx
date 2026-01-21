@@ -54,6 +54,7 @@ const CreateNewBlog = () => {
 
     const handleSave = ( publish : boolean | undefined = false ) => {
         if ( title.trim().replace(" ", "").length < 24 ) {
+            toast.warning("Title needs to be 24 characters minimum")
             return
         }
         createBlogTrigger({
