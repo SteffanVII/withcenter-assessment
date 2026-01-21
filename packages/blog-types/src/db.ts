@@ -19,6 +19,14 @@ export interface BlogBlog {
   user_id: string;
 }
 
+export interface BlogBlogComment {
+  blog_id: string;
+  content: string;
+  created_at: Generated<ColumnType<string, string | string, Date | string> | null>;
+  id: Generated<string>;
+  user_id: string | null;
+}
+
 export interface BlogBlogState {
   id: Generated<number>;
   name: string;
@@ -37,5 +45,6 @@ export interface BlogUserUser {
 export interface DB {
   "blog_user.user": BlogUserUser;
   "blog.blog": BlogBlog;
+  "blog.blog_comment": BlogBlogComment;
   "blog.blog_state": BlogBlogState;
 }

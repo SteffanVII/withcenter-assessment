@@ -67,8 +67,14 @@ import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
 // --- Components ---
 import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle"
 
+// --- Lib ---
+import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
+
 // --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss"
+
+import content from "@/components/tiptap-templates/simple/data/content.json"
+import { cn } from "@/lib/utils"
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -132,6 +138,12 @@ const MainToolbarContent = ({
         <TextAlignButton align="justify" />
       </ToolbarGroup>
 
+      <ToolbarSeparator />
+
+      <ToolbarGroup>
+        <ImageUploadButton text="Add" />
+      </ToolbarGroup>
+
       <Spacer />
 
       {isMobile && <ToolbarSeparator />}
@@ -174,10 +186,12 @@ const MobileToolbarContent = ({
 
 export function SimpleEditor({
   content,
-  setContent
+  setContent,
+  commentSectionMode
 } : {
   content : string,
-  setContent : ( value : string ) => void
+  setContent : ( value : string, isEmpty : boolean ) => void,
+  commentSectionMode? : boolean
 }) {
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
@@ -194,7 +208,10 @@ export function SimpleEditor({
         autocorrect: "off",
         autocapitalize: "off",
         "aria-label": "Main content area, start typing to enter text.",
-        class: "simple-editor",
+        class: cn(
+          "simple-editor",
+          commentSectionMode && `!pb-[3rem]`
+        ),
       },
     },
     extensions: [
@@ -215,10 +232,17 @@ export function SimpleEditor({
       Superscript,
       Subscript,
       Selection,
+      ImageUploadNode.configure({
+        accept: "image/*",
+        maxSize: MAX_FILE_SIZE,
+        limit: 3,
+        upload: handleImageUpload,
+        onError: (error) => console.error("Upload failed:", error),
+      }),
     ],
     content : content === "" ? undefined : JSON.parse(content),
     onUpdate : ( props ) => {
-      setContent(JSON.stringify(props.editor.getJSON()))
+      setContent(JSON.stringify(props.editor.getJSON()), props.editor.isEmpty)
     }
   })
 
@@ -234,7 +258,11 @@ export function SimpleEditor({
   }, [isMobile, mobileView])
 
   return (
-    <div className="simple-editor-wrapper">
+    <div
+      className={cn(
+        "simple-editor-wrapper",
+      )}
+    >
       <EditorContext.Provider value={{ editor }}>
         <Toolbar
           ref={toolbarRef}
@@ -263,7 +291,9 @@ export function SimpleEditor({
         <EditorContent
           editor={editor}
           role="presentation"
-          className="simple-editor-content"
+          className={cn(
+            "simple-editor-content"
+          )}
         />
       </EditorContext.Provider>
     </div>

@@ -1,12 +1,13 @@
 import express, { Router, Response } from "express"
 import dotenv from "dotenv"
-import { createPostgrePool, createTaskprioKyselyConnection, testPostgreConnection } from "./postgre/index.js";
+import { createPostgrePool, createSupabaseClient, createTaskprioKyselyConnection, testPostgreConnection } from "./postgre/index.js";
 import authenticationRoute from "./routes/authentication/authentication.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import blogRoute from "./routes/blog/blog.js";
 import { authenticateRequestMiddleware } from "./middlewares/authentiation.js";
 import blogPublicRoute from "./routes/blog/blogPublic.js";
+import multer from "multer";
 
 dotenv.config()
 
@@ -17,6 +18,7 @@ const app = express()
 // Supabase connection
 createPostgrePool()
 createTaskprioKyselyConnection()
+createSupabaseClient()
 await testPostgreConnection()
 
 app.use(cors({
@@ -36,16 +38,16 @@ const apiRoute = express.Router()
 const privateRoute = express.Router()
 const publicRoute = express.Router()
 
-privateRoute.use( authenticateRequestMiddleware )
-privateRoute.use( "/blog", blogRoute )
+privateRoute.use(authenticateRequestMiddleware)
+privateRoute.use("/blog", blogRoute)
 
-publicRoute.use( "/blog", blogPublicRoute )
+publicRoute.use("/blog", blogPublicRoute)
 
 apiRoute.use("/auth", authenticationRoute)
 apiRoute.use("/private", privateRoute)
 apiRoute.use("/public", publicRoute)
 
-app.use("/api", apiRoute )
+app.use("/api", apiRoute)
 
 
 app.listen(PORT, () => {

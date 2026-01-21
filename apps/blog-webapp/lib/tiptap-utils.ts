@@ -1,3 +1,4 @@
+import { axiosHeaders, axiosInstance } from "@/service"
 import type { Node as PMNode } from "@tiptap/pm/model"
 import type { Transaction } from "@tiptap/pm/state"
 import {
@@ -376,15 +377,31 @@ export const handleImageUpload = async (
 
   // For demo/testing: Simulate upload progress. In production, replace the following code
   // with your own upload implementation.
-  for (let progress = 0; progress <= 100; progress += 10) {
-    if (abortSignal?.aborted) {
-      throw new Error("Upload cancelled")
-    }
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    onProgress?.({ progress })
-  }
+  const formData = new FormData()
+  formData.set( "image", file )
 
-  return "/images/tiptap-ui-placeholder-image.jpg"
+  const response = await axiosInstance.post<string>(
+    `/api/public/blog/upload-image`,
+    formData,
+    {
+      headers : {
+        ...axiosHeaders(),
+        "Content-Type" : "multipart/form-data"
+      }
+    }
+  ) 
+
+  return response.data
+
+  // for (let progress = 0; progress <= 100; progress += 10) {
+  //   if (abortSignal?.aborted) {
+  //     throw new Error("Upload cancelled")
+  //   }
+  //   await new Promise((resolve) => setTimeout(resolve, 500))
+  //   onProgress?.({ progress })
+  // }
+
+  // return "/images/tiptap-ui-placeholder-image.jpg"
 }
 
 type ProtocolOptions = {

@@ -2,6 +2,7 @@ import { Pool, types } from "pg";
 import dotenv from "dotenv"
 import { Kysely, PostgresDialect } from "kysely";
 import { DB } from "@repo/blog-types"
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 dotenv.config()
 
@@ -12,6 +13,7 @@ types.setTypeParser(1114, (stringValue) => {
 });
 
 let pool : Pool | undefined;
+export let supabaseCliet : SupabaseClient;
 
 export function createPostgrePool() {
 
@@ -57,4 +59,11 @@ export const createTaskprioKyselyConnection = async () => {
         dialect
     })
 
+}
+
+export const createSupabaseClient = async () => {
+    supabaseCliet = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_SECRET_KEY
+    )
 }

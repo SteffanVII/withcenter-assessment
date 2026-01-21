@@ -1,7 +1,7 @@
 import express, { Response } from "express"
-import { ICreateBlogRequest, IGetMyBlogRequest, IGetMyBlogsRequest, IUpdateBlogRequest, IUpdateBlogStateRequest } from "./interfaces.js"
+import { ICreateBlogRequest, IDeleteBlogRequest, IGetMyBlogRequest, IGetMyBlogsRequest, IUpdateBlogRequest, IUpdateBlogStateRequest } from "./interfaces.js"
 import { blogKysely } from "../../postgre/index.js"
-import { sql, UpdateObject } from "kysely"
+import { sql } from "kysely"
 import { EDatabaseFunction, TMyBlog } from "@repo/blog-types"
 import { verifyBlogAuthor } from "../../middlewares/authorization.js"
 
@@ -159,7 +159,6 @@ blogRoute.post(
             res.status(500).json({ message : "Internal Server Error" })
         }
 
-
     }
 )
 
@@ -244,6 +243,37 @@ blogRoute.patch(
             res.status(500).json({
                 message : "Internal Server Error",
                 error : JSON.stringify( error, null, 2 )
+            })
+        }
+
+    }
+)
+
+// DELETE
+blogRoute.delete(
+    "/:blogId",
+    verifyBlogAuthor,
+    async ( req : IDeleteBlogRequest, res : Response ) => {
+
+        const {
+            blogId
+        } = req.params
+
+        try {
+
+            await blogKysely.transaction().execute( async trx => {
+                await trx.deleteFrom( "blog.blog" )
+                    .where( "blog.blog.id", "=", sql<string>`${sql.raw(EDatabaseFunction.DETECT_AND_CONVERT_TO_UUID)}(${blogId})` )
+                    .executeTakeFirstOrThrow()
+            } )
+
+            res.status(200).json({ message : "Blog deleted" })
+
+        } catch (error) {
+            console.log(error)
+            res.status(500).json({
+                message : "Internal Server Error",
+                error : JSON.stringify(error)
             })
         }
 

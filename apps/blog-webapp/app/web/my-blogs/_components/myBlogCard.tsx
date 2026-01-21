@@ -10,7 +10,7 @@ import { axiosInstance } from "@/service"
 import { EBlogState, TMyBlog } from "@repo/blog-types"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { AxiosError } from "axios"
-import { Eye, Pencil } from "lucide-react"
+import { Eye, Pencil, Trash } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import React from "react"
@@ -44,6 +44,23 @@ const MyBlogCard : React.FC<TMyBlogCardProps> = ({
         }
     })
 
+    const {
+        mutateAsync : deleteBlogTrigger,
+        isPending : deleteBlogIsPending
+    } = useMutation<any, AxiosError, { blogId : string }>({
+        mutationFn : async ( payload ) => {
+            const response = await axiosInstance.delete(
+                `/api/private/blog/${payload.blogId}`,
+            )
+            return response.data
+        },
+        onSuccess : () => {
+            queryClient.invalidateQueries({
+                queryKey : [ "my-blogs" ]
+            })
+        }
+    })
+
     const handleEdit = () => [
         router.push(`./my-blogs/edit/${data.id}`)
     ]
@@ -52,6 +69,12 @@ const MyBlogCard : React.FC<TMyBlogCardProps> = ({
         updateStateTrigger({
             blogId : data.id,
             state : data.state === EBlogState.DRAFT ? EBlogState.PUBLISHED : EBlogState.DRAFT
+        })
+    }
+
+    const handleDeleteBlog = async () => {
+        deleteBlogTrigger({
+            blogId : data.id
         })
     }
 
@@ -94,6 +117,14 @@ const MyBlogCard : React.FC<TMyBlogCardProps> = ({
                     }
                     <Button variant={"outline"} onClick={handleEdit} >
                         <Pencil/> Edit
+                    </Button>
+                    <Button
+                        variant={"destructive"}
+                        disabled={deleteBlogIsPending}
+                        onClick={handleDeleteBlog}
+                    >
+                        { deleteBlogIsPending && <Spinner/> }
+                        <Trash/> Delete
                     </Button>
                 </div>
             </CardContent>

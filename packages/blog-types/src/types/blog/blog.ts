@@ -1,6 +1,7 @@
 import { Selectable } from "kysely"
 import { EBlogState } from "./enums.js"
-import { BlogBlog, BlogUserUser } from "../../db.js"
+import { BlogBlog, BlogBlogComment, BlogUserUser } from "../../db.js"
+import { TUser } from "../user/user.js"
 
 export type TGetMyBlogsRequestQuery = {
     search? : string,
@@ -30,4 +31,8 @@ export type TMyBlog = Selectable<BlogBlog>
 
 export type TBlog = Selectable<BlogBlog> & {
     author : Pick<Selectable<BlogUserUser>, "firstname" | "lastname" | "email">
+}
+
+export type TBlogComment = Selectable<BlogBlogComment> & {
+    user : Pick<TUser, "email" | "firstname" | "lastname"> | null
 }

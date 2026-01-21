@@ -9,6 +9,7 @@ import StarterKit from "@tiptap/starter-kit"
 import { Highlight } from "@tiptap/extension-highlight"
 import Superscript from "@tiptap/extension-superscript"
 import { Selection } from "@tiptap/extensions"
+import { Image } from "@tiptap/extension-image"
 import "../../../components/tiptap-templates/simple/simple-editor.scss"
 import { generateHTML } from "@tiptap/html"
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss"
@@ -36,17 +37,18 @@ export const BlogContent = ( data : { content : string } ) => {
             TaskList,
             TaskItem.configure({ nested: true }),
             Highlight.configure({ multicolor: true }),
+            Image,
             Typography,
             Superscript,
             Subscript,
-            Selection,
+            Selection
         ]
     )
 
     return (
-        <div className="simple-editor-wrapper" >
+        <div className="simple-editor-wrapper min-h-fit" >
             <div className="simple-editor-content" >
-                <div className="tiptap ProseMirror simple-editor px-[4rem] tiptap-content" dangerouslySetInnerHTML={{ __html : htmlContent }} ></div>
+                <div className="tiptap ProseMirror simple-editor px-[4rem] !pb-[3rem] tiptap-content" dangerouslySetInnerHTML={{ __html : htmlContent }} ></div>
             </div>
         </div>
     )
