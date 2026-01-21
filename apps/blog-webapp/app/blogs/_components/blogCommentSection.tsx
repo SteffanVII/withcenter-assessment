@@ -8,11 +8,11 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { axiosInstance } from "@/service"
-import { TBlogComment } from "@repo/blog-types"
+import { TBlogComment, TUser } from "@repo/blog-types"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { AxiosError } from "axios"
-import { SendHorizonal } from "lucide-react"
-import React, { useState } from "react"
+import { Check, Pencil, SendHorizonal, X } from "lucide-react"
+import React, { useEffect, useState } from "react"
 import BlogContent from "./blogContent"
 import { Spinner } from "@/components/ui/spinner"
 import { Badge } from "@/components/ui/badge"
@@ -73,6 +73,22 @@ const BlogCommentSection : React.FC<TBlogCommentSection> = ({
         }
     })
 
+    const {
+        mutateAsync : userTrigger,
+    } = useMutation<TUser, AxiosError>({
+        mutationFn : async () => {
+            const response = await axiosInstance.post<TUser>(
+                "/api/auth"
+            )
+            return response.data
+        },
+        onSuccess : (data) => {
+            setAuthUser(data)
+        }
+    })
+
+    const [ authUser, setAuthUser ] = useState<TUser | null>(null)
+
     const [ content, setContent ] = useState<string>("")
     const [ isEmpty, setIsEmpty ] = useState<boolean>(true)
     const [ editorForceRenderKey, setEditorForceRenderKey ] = useState<number>(1)
@@ -86,6 +102,10 @@ const BlogCommentSection : React.FC<TBlogCommentSection> = ({
             content : content
         })
     }
+
+    useEffect(() => {
+        userTrigger()
+    }, [])
 
     return (
         <>
@@ -155,22 +175,11 @@ const BlogCommentSection : React.FC<TBlogCommentSection> = ({
                         }
                         {
                             comments && comments.map( comment => (
-                                <div
+                                <BlogCommentCard
                                     key={comment.id}
-                                    className={cn(
-                                        `flex flex-col`,
-                                        `p-4 rounded-md bg-muted/30`,
-                                    )}
-                                >
-                                    <div className="flex items-center gap-4" >
-                                        <p>{ comment.user ? `${comment.user.firstname} ${comment.user.lastname}` : "Anonymous" }</p>
-                                        {
-                                            comment.user && <Badge variant={"outline"} className="text-muted-foreground" >{comment.user.email}</Badge>
-                                        }
-                                    </div>
-                                    <p className="text-xs text-muted-foreground" >{dayjs(comment.created_at).fromNow()}</p>
-                                    <BlogContent content={comment.content} />
-                                </div>
+                                    data={comment}
+                                    authUser={authUser}
+                                />
                             ) )
                         }
                     </div>
@@ -179,6 +188,150 @@ const BlogCommentSection : React.FC<TBlogCommentSection> = ({
         </>
     )
     
+}
+
+type TBlogCommentCardProps = {
+    data : TBlogComment,
+    authUser : TUser | null
+}
+
+const BlogCommentCard : React.FC<TBlogCommentCardProps> = ({
+    data,
+    authUser
+}) => {
+
+    const queryClient = useQueryClient()
+
+    const [ editMode, setEditMode ] = useState<boolean>(false)
+    const [ content, setContent ] = useState<string>("");
+    const [ isEmpty, setIsEmpty ] = useState<boolean>(false);
+
+    const {
+        mutateAsync : updateCommentTrigger,
+        isPending : updateCommentIsPending
+    } = useMutation<any, AxiosError, { commentId : string, content : string }>({
+        mutationFn : async ( payload ) => {
+            const response = await axiosInstance.patch(
+                `/api/private/blog/comment`,
+                payload
+            )
+            return response.data
+        },
+        onSuccess : ( _, variables ) => {
+            setEditMode(false)
+            setContent("")
+            setIsEmpty(false)
+            queryClient.setQueryData(
+                [ "blog-comments", data.blog_id ],
+                ( oldData : TBlogComment[] ) => {
+                    if ( oldData ) {
+                        return oldData.map( comment => {
+                            if ( comment.id === variables.commentId ) {
+                                return {
+                                    ...comment,
+                                    content : variables.content
+                                }
+                            }
+                            return comment
+                        } )
+                    }
+                    return oldData
+                }
+            )
+        }
+    })
+
+    const handleUpdateComment = () => {
+        updateCommentTrigger({
+            commentId : data.id,
+            content : content
+        })
+    }
+
+    return (
+        <div
+            key={data.id}
+            className={cn(
+                `flex flex-col gap-4`,
+                `p-4 rounded-md bg-muted/30`,
+            )}
+        >
+            <div className="flex items-center gap-4" >
+                <p>{ data.user ? `${data.user.firstname} ${data.user.lastname}` : "Anonymous" }</p>
+                {
+                    data.user && <Badge variant={"outline"} className="text-muted-foreground" >{data.user.email}</Badge>
+                }
+                {
+                    (authUser && authUser.id === data.user_id) &&
+                    <div
+                        className="flex gap-2 ml-auto"
+                    >
+                        {
+                            !editMode &&
+                            <Button
+                                size={"icon"}
+                                variant={"ghost"}
+                                onClick={() => {
+                                    setEditMode(true)
+                                    setContent(data.content)
+                                    setIsEmpty(false)
+                                }}
+                            >
+                                <Pencil/>
+                            </Button>
+                        }
+                        {
+                            editMode &&
+                            <>
+                                <Button
+                                    size={"icon"}
+                                    variant={"outline"}
+                                    disabled={isEmpty || updateCommentIsPending}
+                                    onClick={handleUpdateComment}
+                                >
+                                    {
+                                        updateCommentIsPending ?
+                                        <Spinner/>
+                                        :
+                                        <Check/>
+                                    }
+                                </Button>
+                                <Button
+                                    size={"icon"}
+                                    variant={"outline"}
+                                    disabled={updateCommentIsPending}
+                                    onClick={() => {
+                                        setEditMode(false)
+                                        setContent("")
+                                        setIsEmpty(false)
+                                    }}
+                                >
+                                    <X/>
+                                </Button>
+                            </>
+                        }
+                    </div>
+                }
+            </div>
+            <p className="text-xs text-muted-foreground" >{dayjs(data.created_at).fromNow()}</p>
+            {
+                editMode ?
+                <Card className="p-0" >
+                    <SimpleEditor
+                        content={content}
+                        setContent={( value, isEmpty ) => {
+                            setContent(value)
+                            setIsEmpty(isEmpty)
+                        }}
+                        commentSectionMode
+                    />
+                </Card>
+                :
+                <BlogContent content={data.content} />
+            }
+        </div>
+    )
+
 }
 
 export default BlogCommentSection;

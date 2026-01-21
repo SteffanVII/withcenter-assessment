@@ -51,7 +51,7 @@ export default async function BlogPage({ params } : TBlogPageProps) {
                     
                 </>
             }
-            <BlogCommentSection blogId={response.data.id} />
+            <BlogCommentSection blogId={response.data.id}/>
         </div>
     )
 

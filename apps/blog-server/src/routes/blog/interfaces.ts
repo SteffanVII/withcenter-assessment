@@ -54,3 +54,10 @@ export interface IGetBlogCommentsRequest extends Request {
         blogId : string
     }
 }
+
+export interface IUpdateBlogCommentRequest extends IAuthenticatedRequest {
+    body : {
+        commentId : string,
+        content : string
+    }
+}

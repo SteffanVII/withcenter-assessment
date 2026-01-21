@@ -1,5 +1,5 @@
 import express, { Response } from "express"
-import { ICreateBlogRequest, IDeleteBlogRequest, IGetMyBlogRequest, IGetMyBlogsRequest, IUpdateBlogRequest, IUpdateBlogStateRequest } from "./interfaces.js"
+import { ICreateBlogRequest, IDeleteBlogRequest, IGetMyBlogRequest, IGetMyBlogsRequest, IUpdateBlogCommentRequest, IUpdateBlogRequest, IUpdateBlogStateRequest } from "./interfaces.js"
 import { blogKysely } from "../../postgre/index.js"
 import { sql } from "kysely"
 import { EDatabaseFunction, TMyBlog } from "@repo/blog-types"
@@ -244,6 +244,41 @@ blogRoute.patch(
                 message : "Internal Server Error",
                 error : JSON.stringify( error, null, 2 )
             })
+        }
+
+    }
+)
+
+blogRoute.patch(
+    "/comment",
+    async ( req : IUpdateBlogCommentRequest, res : Response ) => {
+
+        const {
+            commentId,
+            content
+        } = req.body;
+
+        const {
+            id
+        } = req.user
+
+        try {
+
+            await blogKysely.updateTable( "blog.blog_comment" )
+                .set({
+                    content : content
+                })
+                .where( "blog.blog_comment.id", "=", sql<string>`${sql.raw(EDatabaseFunction.DETECT_AND_CONVERT_TO_UUID)}(${commentId})` )
+                .where( "blog.blog_comment.user_id", "=", sql<string>`${sql.raw(EDatabaseFunction.DETECT_AND_CONVERT_TO_UUID)}(${id})` )
+                .executeTakeFirstOrThrow()
+
+            res.status(200).json({
+                message : "Comment updated"
+            })
+
+        } catch (error) {
+            console.log(error)
+            res.status(500).json({ message : "Internal Server Error" })
         }
 
     }
