@@ -299,6 +299,7 @@ const BlogCommentCard : React.FC<TBlogCommentCardProps> = ({
                                 <Button
                                     size={"icon"}
                                     variant={"ghost"}
+                                    disabled={deleteCommentIsPending}
                                     onClick={() => {
                                         setEditMode(true)
                                         setContent(data.content)
@@ -310,9 +311,15 @@ const BlogCommentCard : React.FC<TBlogCommentCardProps> = ({
                                 <Button
                                     size={"icon"}
                                     variant={"ghost"}
+                                    disabled={deleteCommentIsPending}
                                     onClick={handleDeleteComment}
                                 >
-                                    <Trash/>
+                                    {
+                                        deleteCommentIsPending ?
+                                        <Spinner/>
+                                        :
+                                        <Trash/>
+                                    }
                                 </Button>
                             </>
                         }
