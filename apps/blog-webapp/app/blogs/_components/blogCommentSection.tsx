@@ -11,7 +11,7 @@ import { axiosInstance } from "@/service"
 import { TBlogComment, TUser } from "@repo/blog-types"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { AxiosError } from "axios"
-import { Check, Pencil, SendHorizonal, X } from "lucide-react"
+import { Check, Pencil, SendHorizonal, Trash, X } from "lucide-react"
 import React, { useEffect, useState } from "react"
 import BlogContent from "./blogContent"
 import { Spinner } from "@/components/ui/spinner"
@@ -241,11 +241,38 @@ const BlogCommentCard : React.FC<TBlogCommentCardProps> = ({
         }
     })
 
+    const {
+        mutateAsync : deleteCommentTrigger,
+        isPending : deleteCommentIsPending
+    } = useMutation<any, AxiosError, string>({
+        mutationFn : async ( payload ) => {
+            const response = await axiosInstance.delete(
+                `/api/public/blog/comment/${payload}`
+            )
+            return response.data
+        },
+        onSuccess : () => {
+            queryClient.setQueryData(
+                [ "blog-comments", data.blog_id ],
+                ( oldData : TBlogComment[] ) => {
+                    if ( oldData ) {
+                        return oldData.filter( comment => comment.id !== data.id )
+                    }
+                    return oldData
+                }
+            )
+        }
+    })
+
     const handleUpdateComment = () => {
         updateCommentTrigger({
             commentId : data.id,
             content : content
         })
+    }
+
+    const handleDeleteComment = () => {
+        deleteCommentTrigger(data.id)
     }
 
     return (
@@ -268,17 +295,26 @@ const BlogCommentCard : React.FC<TBlogCommentCardProps> = ({
                     >
                         {
                             !editMode &&
-                            <Button
-                                size={"icon"}
-                                variant={"ghost"}
-                                onClick={() => {
-                                    setEditMode(true)
-                                    setContent(data.content)
-                                    setIsEmpty(false)
-                                }}
-                            >
-                                <Pencil/>
-                            </Button>
+                            <>
+                                <Button
+                                    size={"icon"}
+                                    variant={"ghost"}
+                                    onClick={() => {
+                                        setEditMode(true)
+                                        setContent(data.content)
+                                        setIsEmpty(false)
+                                    }}
+                                >
+                                    <Pencil/>
+                                </Button>
+                                <Button
+                                    size={"icon"}
+                                    variant={"ghost"}
+                                    onClick={handleDeleteComment}
+                                >
+                                    <Trash/>
+                                </Button>
+                            </>
                         }
                         {
                             editMode &&

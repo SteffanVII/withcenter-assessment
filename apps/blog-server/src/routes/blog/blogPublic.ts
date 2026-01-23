@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { IGetBlogCommentsRequest, IGetPublicBlogRequest, IPostBlogCommentsRequest, IUploadPhotoRequest } from "./interfaces.js";
+import { IDeleteBlogCommentRequest, IGetBlogCommentsRequest, IGetPublicBlogRequest, IPostBlogCommentsRequest, IUploadPhotoRequest } from "./interfaces.js";
 import { blogKysely, supabaseCliet } from "../../postgre/index.js";
 import { sql } from "kysely";
 import { EBlogState, EDatabaseFunction, TBlog } from "@repo/blog-types";
@@ -237,6 +237,52 @@ blogPublicRoute.post(
                 message : "Internal Server Error",
                 error : JSON.stringify( error, null, 2 )
             })
+        }
+
+    }
+)
+
+// DELETE
+blogPublicRoute.delete(
+    "/comment/:commentId",
+    authenticatePublicRequestMiddleware,
+    async ( req : IDeleteBlogCommentRequest, res : Response ) => {
+
+        const {
+            commentId
+        } = req.params
+
+        const user = req.user
+
+        if ( !user ) {
+            res.status(401)
+                .json({
+                    message : "Unauthorized",
+                    error : "User not authenticated"
+                })
+            return
+        }
+
+        try {
+            await blogKysely.transaction().execute( async trx => {
+
+                await trx.deleteFrom( "blog.blog_comment" )
+                    .where( "blog.blog_comment.id", "=", sql<string>`${sql.raw(EDatabaseFunction.DETECT_AND_CONVERT_TO_UUID)}(${commentId})` )
+                    .where( "blog.blog_comment.user_id", "=", sql<string>`${sql.raw(EDatabaseFunction.DETECT_AND_CONVERT_TO_UUID)}(${user.id})` )
+                    .executeTakeFirstOrThrow()
+
+            })
+            res.status(200)
+                .json({
+                    message : "Comment deleted successfully"
+                })
+        } catch (error) {
+            console.log(error)
+            res.status(500)
+                .json({
+                    message : "Internal Server Error",
+                    error : JSON.stringify(error, null, 2)
+                })
         }
 
     }

@@ -61,3 +61,9 @@ export interface IUpdateBlogCommentRequest extends IAuthenticatedRequest {
         content : string
     }
 }
+
+export interface IDeleteBlogCommentRequest extends IAuthenticatedPublicRequest {
+    params : {
+        commentId : string
+    }
+}
